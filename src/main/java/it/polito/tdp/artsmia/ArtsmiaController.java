@@ -1,8 +1,10 @@
 package it.polito.tdp.artsmia;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.artsmia.model.Arco;
 import it.polito.tdp.artsmia.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -31,7 +33,7 @@ public class ArtsmiaController {
     private Button btnCalcolaPercorso;
 
     @FXML
-    private ComboBox<?> boxRuolo;
+    private ComboBox<String> boxRuolo;
 
     @FXML
     private TextField txtArtista;
@@ -43,22 +45,63 @@ public class ArtsmiaController {
     void doArtistiConnessi(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Calcola artisti connessi");
+    	
+    	List<Arco> archi = model.getArtistiConnessi();
+    	if(archi.isEmpty()) {
+    		this.txtResult.appendText("Prima devi creare il grafo");
+    	}
+    	
+    	for(Arco a: archi) {
+    		this.txtResult.appendText(a.getA1()+" - "+a.getA2()+" : "+a.getPeso()+"\n");
+    	}
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Calcola percorso");
+    	
+    	String input = this.txtArtista.getText();
+    	int idArtista = 0;
+    	try {
+    		idArtista = Integer.parseInt(input);
+    	}catch(NumberFormatException e) {
+    		this.txtResult.appendText("Scelgi un valore valido");
+    	}
+    	
+    	if(model.isInGraph(idArtista)==false) {
+    		this.txtResult.appendText("Artista non presente nel grafo");
+    		return;
+    	}
+    	
+    	List<Integer> percorso = model.calcolaPercorso(idArtista);
+    	for(Integer i : percorso) {
+    		this.txtResult.appendText(i.toString()+"\n");
+    	}
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Crea grafo");
+    	
+    	String role = this.boxRuolo.getValue();
+    	if(role==null) {
+    		this.txtResult.appendText("Scegli un ruolo.");
+    	}
+    	
+    	model.creagrafo(role);
+    	
+    	txtResult.appendText(String.format("Grafo creato con %d vertici e %d archi", 
+    			this.model.getAllVertex().size(), this.model.getArtistiConnessi().size()));
+    	
+    	btnCalcolaPercorso.setDisable(false);
     }
 
     public void setModel(Model model) {
     	this.model = model;
+    	List<String> ruoli = model.getAllRoles();
+    	this.boxRuolo.getItems().addAll(ruoli);
     }
 
     
